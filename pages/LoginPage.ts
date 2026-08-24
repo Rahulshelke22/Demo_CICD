@@ -14,7 +14,7 @@ export class LoginPage extends BasePage {
     this.passwordInput = page.locator('#Password');
     this.rememberMeCheckbox = page.locator('#RememberMe');
     this.loginButton = page.locator('input.button-1.login-button');
-    this.validationSummary = page.locator('.message-error, .validation-summary-errors');
+    this.validationSummary = page.locator('.message-error, .validation-summary-errors').first();
   }
 
   async open() {

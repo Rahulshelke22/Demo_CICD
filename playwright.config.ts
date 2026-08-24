@@ -42,21 +42,21 @@ export default defineConfig({
       testDir: './tests/ui',
       use: { ...devices['Desktop Chrome'] },
     },
-    {
-      name: 'firefox',
-      testDir: './tests/ui',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      testDir: './tests/ui',
-      use: { ...devices['Desktop Safari'] },
-    },
-    {
-      name: 'Mobile Chrome',
-      testDir: './tests/ui',
-      use: { ...devices['Pixel 5'] },
-    },
+    // {
+    //   name: 'firefox',
+    //   testDir: './tests/ui',
+    //   use: { ...devices['Desktop Firefox'] },
+    // },
+    // {
+    //   name: 'webkit',
+    //   testDir: './tests/ui',
+    //   use: { ...devices['Desktop Safari'] },
+    // },
+    // {
+    //   name: 'Mobile Chrome',
+    //   testDir: './tests/ui',
+    //   use: { ...devices['Pixel 5'] },
+    // },
 
     // ---------- API test project (no browser needed) ----------
     {

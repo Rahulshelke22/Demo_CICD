@@ -32,7 +32,12 @@ export class RegisterPage extends BasePage {
     this.confirmPasswordInput = page.locator('#ConfirmPassword');
     this.registerButton = page.locator('#register-button');
     this.registerResultMessage = page.locator('.result');
-    this.validationSummary = page.locator('.validation-summary-errors');
+    // The register form uses client-side jQuery Unobtrusive Validation for
+    // password-mismatch, invalid-email-format, and blank-required-field cases —
+    // those never hit the server, so only inline .field-validation-error spans
+    // appear (no .validation-summary-errors, which is server-rendered and only
+    // shows up for checks the server itself performs, e.g. duplicate email).
+    this.validationSummary = page.locator('.validation-summary-errors, .field-validation-error').first();
   }
 
   async open() {
