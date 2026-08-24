@@ -4,7 +4,7 @@ pipeline {
     // Requires "NodeJS" plugin configured in:
     // Manage Jenkins > Tools > NodeJS installations (name it "Node20" or update below)
     tools {
-        nodejs 'Node20'
+        nodejs 'node20'
     }
 
     options {
