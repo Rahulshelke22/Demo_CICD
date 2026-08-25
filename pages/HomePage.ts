@@ -7,6 +7,9 @@ export class HomePage extends BasePage {
   readonly electronicsCategoryLink: Locator;
   readonly featuredProducts: Locator;
   readonly addToCartButtons: Locator;
+  readonly digitalDownloadsCategoryLink: Locator;
+  readonly jewelryCategoryLink:Locator
+  readonly giftcardsCategorylink:Locator
 
   constructor(page: Page) {
     super(page);
@@ -18,6 +21,10 @@ export class HomePage extends BasePage {
     // e.g. #add-to-cart-button-{productId}. Prefer ProductPage.addToCartById()
     // for a specific product; this locator is for "first visible" cases.
     this.addToCartButtons = page.locator('.product-box-add-to-cart-button');
+    this.digitalDownloadsCategoryLink = page.locator('.top-menu a[href="/digital-downloads"]');
+    this.jewelryCategoryLink = page.locator('.top-menu a[href="/jewelry"]');
+    this.giftcardsCategorylink=page.locator('.top-menu a[href="/gift-cards"]')
+
   }
 
   async open() {
@@ -35,4 +42,8 @@ export class HomePage extends BasePage {
   async addFirstFeaturedProductToCart() {
     await this.addToCartButtons.first().click();
   }
+
+  //
+
+  
 }

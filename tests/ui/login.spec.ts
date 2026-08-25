@@ -1,53 +1,54 @@
-import { test, expect } from '@playwright/test';
-import { LoginPage } from '../../pages/LoginPage';
-import { RegisterPage } from '../../pages/RegisterPage';
-import { randomUser } from '../../utils/test-data';
+import { test, expect } from '../../fixtures/pages.fixture';
+import { existingUser } from '../../utils/test-data';
 
+/**
+ * Pure LOGIN validation — this suite only exercises the login form itself
+ * against a real, already-registered account (EXISTING_USER_EMAIL /
+ * EXISTING_USER_PASSWORD in .env). It intentionally never registers a new
+ * user; that's covered separately in register.spec.ts. If credentials
+ * aren't configured, the positive-login and logout tests fail fast with a
+ * clear message rather than silently creating throwaway accounts.
+ */
 test.describe('Login', () => {
-  test('registers a new user then logs in successfully with those credentials', async ({ page }) => {
-    // Demo Web Shop has no stable seeded account, so we create one first
-    // to keep this test independent and repeatable on every run.
-    const user = randomUser();
-    const registerPage = new RegisterPage(page);
-    await registerPage.open();
-    await registerPage.register(user);
-    await registerPage.expectRegistrationSuccess();
-    await registerPage.logout();
-    await registerPage.expectLoggedOut();
+  test.beforeEach(async () => {
+    if (!existingUser.email || !existingUser.password) {
+      test.skip(
+        true,
+        'EXISTING_USER_EMAIL / EXISTING_USER_PASSWORD are not set in .env — ' +
+          'this test validates login against a real existing account.'
+      );
+    }
+  });
 
-    const loginPage = new LoginPage(page);
+  test('logs in successfully with valid existing credentials', async ({ page, loginPage }) => {
     await loginPage.open();
-    await loginPage.login(user.email, user.password);
+    await loginPage.login(existingUser.email, existingUser.password);
 
     await loginPage.expectLoggedIn();
     await expect(page).toHaveURL(/demowebshop\.tricentis\.com\/?$/);
   });
 
-  test('shows a validation error for invalid credentials', async ({ page }) => {
-    const loginPage = new LoginPage(page);
+  test('logs out successfully after logging in', async ({ loginPage }) => {
+    await loginPage.open();
+    await loginPage.login(existingUser.email, existingUser.password);
+    await loginPage.expectLoggedIn();
+
+    await loginPage.logout();
+    await loginPage.expectLoggedOut();
+  });
+});
+
+test.describe('Login validation (no account required)', () => {
+  test('shows a validation error for invalid credentials', async ({ loginPage }) => {
     await loginPage.open();
     await loginPage.login('nonexistent.user@example-test.com', 'WrongPassword123!');
     await loginPage.expectLoginError();
   });
 
-  test('shows a validation error for an empty password', async ({ page }) => {
-    const loginPage = new LoginPage(page);
+  test('shows a validation error for an empty password', async ({ loginPage }) => {
     await loginPage.open();
     await loginPage.emailInput.fill('someone@example-test.com');
     await loginPage.loginButton.click();
     await loginPage.expectLoginError();
-  });
-
-  test('logs out successfully after logging in', async ({ page }) => {
-    const user = randomUser();
-    const registerPage = new RegisterPage(page);
-    await registerPage.open();
-    await registerPage.register(user);
-    await registerPage.expectRegistrationSuccess();
-
-    // Registration auto-logs the user in on this site.
-    await registerPage.expectLoggedIn();
-    await registerPage.logout();
-    await registerPage.expectLoggedOut();
   });
 });

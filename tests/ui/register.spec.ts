@@ -1,11 +1,9 @@
-import { test, expect } from '@playwright/test';
-import { RegisterPage } from '../../pages/RegisterPage';
+import { test, expect } from '../../fixtures/pages.fixture';
 import { randomUser, randomEmail } from '../../utils/test-data';
 
 test.describe('Registration', () => {
-  test('registers a new user successfully with valid details', async ({ page }) => {
+  test('registers a new user successfully with valid details', async ({ registerPage }) => {
     const user = randomUser();
-    const registerPage = new RegisterPage(page);
 
     await registerPage.open();
     await registerPage.register({ ...user, gender: 'M' });
@@ -14,8 +12,7 @@ test.describe('Registration', () => {
     await registerPage.expectLoggedIn();
   });
 
-  test('rejects registration when passwords do not match', async ({ page }) => {
-    const registerPage = new RegisterPage(page);
+  test('rejects registration when passwords do not match', async ({ registerPage }) => {
     const email = randomEmail();
 
     await registerPage.open();
@@ -29,9 +26,7 @@ test.describe('Registration', () => {
     await registerPage.expectValidationError();
   });
 
-  test('rejects registration with an invalid email format', async ({ page }) => {
-    const registerPage = new RegisterPage(page);
-
+  test('rejects registration with an invalid email format', async ({ registerPage }) => {
     await registerPage.open();
     await registerPage.firstNameInput.fill('Jane');
     await registerPage.lastNameInput.fill('Doe');
@@ -43,18 +38,15 @@ test.describe('Registration', () => {
     await registerPage.expectValidationError();
   });
 
-  test('rejects registration with required fields left blank', async ({ page }) => {
-    const registerPage = new RegisterPage(page);
-
+  test('rejects registration with required fields left blank', async ({ registerPage }) => {
     await registerPage.open();
     await registerPage.registerButton.click();
 
     await registerPage.expectValidationError();
   });
 
-  test('does not allow registering the same email twice', async ({ page }) => {
+  test('does not allow registering the same email twice', async ({ registerPage }) => {
     const user = randomUser();
-    const registerPage = new RegisterPage(page);
 
     await registerPage.open();
     await registerPage.register(user);

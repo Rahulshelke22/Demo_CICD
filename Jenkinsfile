@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     // Requires "NodeJS" plugin configured in:
-    // Manage Jenkins > Tools > NodeJS installations (name it "Node20" or update below)
+    // Manage Jenkins > Tools > NodeJS installations (name it "node20" or update below)
     tools {
         nodejs 'node20'
     }
@@ -51,6 +51,15 @@ pipeline {
             }
         }
 
+        stage('Clean previous Allure results') {
+            steps {
+                // Prevents old runs' pass/fail data from bleeding into this
+                // build's report. Ignores the error if the folder doesn't
+                // exist yet (first run).
+                bat 'if exist allure-results rmdir /s /q allure-results'
+            }
+        }
+
         stage('Run UI tests') {
             when {
                 expression { params.PROJECT == 'all' || params.PROJECT in ['chromium', 'firefox', 'webkit'] }
@@ -78,7 +87,7 @@ pipeline {
 
     post {
         always {
-            // Publish the HTML report (requires the "HTML Publisher" plugin)
+            // Publish the Playwright HTML report (requires the "HTML Publisher" plugin)
             publishHTML(target: [
                 allowMissing: true,
                 alwaysLinkToLastBuild: true,
@@ -91,10 +100,25 @@ pipeline {
             // Publish JUnit results (requires the "JUnit" plugin — built in to most Jenkins setups)
             junit allowEmptyResults: true, testResults: 'test-results/junit.xml'
 
-            archiveArtifacts artifacts: 'playwright-report/**, test-results/**', allowEmptyArchive: true, fingerprint: true
+            // Generate the static Allure report from allure-results/ (written by the
+            // allure-playwright reporter configured in playwright.config.ts), then
+            // publish it the same way as the Playwright report above. This runs
+            // whether tests passed or failed, and even if allure-results is empty
+            // (allowMissing: true), so the pipeline never breaks because of it.
+            bat script: 'npx allure generate allure-results --clean -o allure-report', returnStatus: true
+            publishHTML(target: [
+                allowMissing: true,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'allure-report',
+                reportFiles: 'index.html',
+                reportName: 'Allure Report'
+            ])
+
+            archiveArtifacts artifacts: 'playwright-report/**, allure-report/**, test-results/**', allowEmptyArchive: true, fingerprint: true
         }
         failure {
-            echo 'Build failed — check the Playwright HTML report and JUnit results above for details.'
+            echo 'Build failed — check the Playwright HTML report, Allure Report, and JUnit results above for details.'
         }
     }
 }

@@ -25,3 +25,21 @@ export const existingUser = {
   email: process.env.EXISTING_USER_EMAIL || '',
   password: process.env.EXISTING_USER_PASSWORD || '',
 };
+
+/**
+ * Throwaway billing details for checkout tests. All values are fake/test
+ * data — never real personal or payment information.
+ */
+export function randomBillingDetails(email: string) {
+  const stamp = Date.now();
+  return {
+    firstName: `Test${stamp}`,
+    lastName: 'Automation',
+    email,
+    country: 'United States',
+    city: 'New York',
+    address1: `${100 + (stamp % 900)} Test Street`,
+    zipPostalCode: '10001',
+    phoneNumber: '5555550100',
+  };
+}
