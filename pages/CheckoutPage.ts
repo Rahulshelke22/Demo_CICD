@@ -104,8 +104,23 @@ export class CheckoutPage extends BasePage {
     // selected existing address: the server uses whatever the dropdown
     // points to on submit regardless of what's typed into the hidden
     // fields, so there's nothing to gain by forcing them visible.
-    if (await this.billingAddressDropdown.isVisible().catch(() => false)) {
-      const selectedValue = await this.billingAddressDropdown.inputValue();
+    // This site's one-page checkout loads the billing step's HTML --
+    // including this dropdown, when the account has a saved address --
+    // via an AJAX call that fires AFTER the page navigates here. It is
+    // NOT present in the initial page HTML. A synchronous count() check
+    // run immediately after navigation can return 0 in the brief window
+    // before that AJAX call resolves, sending us straight to the
+    // "fill new address" path below -- whose fields then stay hidden
+    // forever (because a saved address really is selected once the AJAX
+    // content lands), causing a .fill() timeout. Waiting for the dropdown
+    // to ATTACH (not just checking count() once) avoids the race.
+    const dropdownAppeared = await this.billingAddressDropdown
+      .waitFor({ state: 'attached', timeout: 8000 })
+      .then(() => true)
+      .catch(() => false);
+
+    if (dropdownAppeared) {
+      const selectedValue = await this.billingAddressDropdown.inputValue().catch(() => '');
       if (selectedValue && selectedValue.trim() !== '') {
         // An existing saved address is selected -- proceed with it as-is.
         return;
@@ -115,6 +130,7 @@ export class CheckoutPage extends BasePage {
       // which should already be visible in this case.
     }
 
+    await this.billingFirstName.waitFor({ state: 'visible', timeout: 8000 });
     await this.billingFirstName.fill(details.firstName);
     await this.billingLastName.fill(details.lastName);
     await this.billingEmail.fill(details.email);
@@ -147,10 +163,18 @@ export class CheckoutPage extends BasePage {
   }
 
   async selectPaymentMethod(value: 'CheckMoneyOrder' | 'Manual' | 'CashOnDelivery' | 'PurchaseOrder' = 'CheckMoneyOrder') {
-    await this.paymentMethodRadios.locator(`[value*="${value}"]`).check().catch(async () => {
-      // Fallback: some builds don't expose value substrings cleanly — select by index.
-      await this.paymentMethodRadios.first().check();
-    });
+    // paymentMethodRadios ("input[name=\"paymentmethod\"]") already resolves
+    // to the <input> elements themselves -- leaf nodes with no children.
+    // Chaining .locator('[value*="..."]') onto it searches INSIDE each
+    // matched input for a descendant, which can never exist, so this
+    // always resolved to 0 elements, burned the full action timeout
+    // retrying, then silently fell back to whichever radio is first in
+    // the DOM (Cash On Delivery here) instead of the intended method.
+    // Live values confirmed on the site: "Payments.CashOnDelivery",
+    // "Payments.CheckMoneyOrder", "Payments.Manual", "Payments.PurchaseOrder".
+    const radio = this.page.locator(`input[name="paymentmethod"][value*="${value}"]`);
+    await radio.waitFor({ state: 'visible', timeout: 8000 });
+    await radio.check();
     await this.paymentMethodContinueButton.click();
   }
 

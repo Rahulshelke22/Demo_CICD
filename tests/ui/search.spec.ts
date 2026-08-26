@@ -27,7 +27,10 @@ test.describe('Product search', () => {
 
   test('returns a plausible number of results for a broad term', async ({ homePage, searchPage }) => {
     await homePage.open();
-    await homePage.search('laptop');
+    // 'laptop' matches nothing (quick search only matches product TITLES,
+    // and no product title contains "laptop" in the current catalog) --
+    // 'computer' is proven to match, per the first test in this file.
+    await homePage.search('computer');
 
     const count = await searchPage.getResultCount();
     expect(count).toBeGreaterThan(0);
